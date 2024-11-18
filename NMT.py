@@ -905,6 +905,14 @@ def main():
             print(f"No trained model found at {best_model_filepath}. Please run model training first.")
             sys.exit(1)
 
+        # Apply quantization to encoder and decoder
+        encoder = torch.quantization.quantize_dynamic(
+            encoder, {torch.nn.Linear}, dtype=torch.qint8
+        )
+        decoder = torch.quantization.quantize_dynamic(
+            decoder, {torch.nn.Linear}, dtype=torch.qint8
+        )
+
         # Test datasets for evaluation (tst2013 and tst2012)
         test_datasets = {
             'tst2013': {
@@ -944,14 +952,7 @@ def main():
             )
 
             # Validate the model on the test dataset
-            average_sentence_bleu, corpus_bleu_score = validate(
-                test_loader,
-                encoder,
-                decoder,
-                tgt_vocab,
-                device=device,
-                print_translations=True
-            )
+            average_sentence_bleu, corpus_bleu_score = validate(test_loader,encoder,decoder,tgt_vocab,device=device,print_translations=True)
 
             # Print BLEU scores for the test dataset
             print(f'{test_name} - Average Sentence BLEU: {average_sentence_bleu * 100:.3f}')
